@@ -27,6 +27,84 @@ kubectl get \
     --raw "/apis/metrics.k8s.io/v1beta1/pods" | jq
 ```
 
+### Auto Scaling based on CPU and memory usage
+
+We will be using a small golang web app to test the HPA.
+
+Deploy [podinfo](https://github.com/stefanprodan/k8s-podinfo) in the `default` namespace:
+
+```bash
+kubectl create \
+    -f ./podinfo/podinfo-svc.yaml,podinfo-dep.yaml
+```
+
+You can access podinfo using the NodePort service at `http://<K8S_PUBLIC_IP>:31198`.
+
+Let's define a HPA that will maintain a minimum of two replicas and will scale up to ten 
+if the CPU average is over 80% or if the memory goes over 200Mi:
+
+```yaml
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: podinfo
+spec:
+  scaleTargetRef:
+    apiVersion: extensions/v1beta1
+    kind: Deployment
+    name: podinfo
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      targetAverageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      targetAverageValue: 200Mi
+```
+
+Create the HPA:
+
+```bash
+kubectl create \
+    -f ./podinfo/podinfo-hpa.yaml
+```
+
+After a couple of seconds the HPA controller will contact the metrics server and will fetch the CPU 
+and memory usage:
+
+```bash
+kubectl get hpa
+
+NAME      REFERENCE            TARGETS                      MINPODS   MAXPODS   REPLICAS   AGE
+podinfo   Deployment/podinfo   2826240 / 200Mi, 15% / 80%   2         10        2          5m
+```
+
+In order to increase the CPU usage we could run a load test with hey:
+
+```bash
+#install hey
+go get -u github.com/rakyll/hey
+
+#do 10K requests
+hey -n 10000 -q 10 -c 5 http://<K8S_PUBLIC_IP>:31198/
+```
+
+You can monitor the HPA events with:
+
+```bash
+$ kubectl describe hpa
+
+Events:
+  Type    Reason             Age   From                       Message
+  ----    ------             ----  ----                       -------
+  Normal  SuccessfulRescale  7m    horizontal-pod-autoscaler  New size: 4; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  3m    horizontal-pod-autoscaler  New size: 8; reason: cpu resource utilization (percentage of request) above target
+```
+
 ### Prometheus
 
 Create the `monitoring` namespace:
@@ -70,7 +148,7 @@ kubectl get \
     --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/monitoring/pods/*/fs_usage_bytes" | jq
 ```
 
-### Auto Scaling
+### Auto Scaling based on custom metrics
 
 Create `podinfo` NodePort service and deployment in the `default` namespace:
 
@@ -145,11 +223,11 @@ spec:
       targetAverageValue: 10
 ```
 
-Create the hpa in the `default` namespace:
+Create the hpa for the `podinfo` deployment in the `default` namespace:
 
 ```bash
 kubectl create \
-    -f ./podinfo/podinfo-svc.yaml,podinfo-hpa-custom.yaml
+    -f ./podinfo/podinfo-hpa-custom.yaml
 ```
 
 After a couple of seconds the HPA will fetch the `http_requests` value from the metrics API:
@@ -193,7 +271,7 @@ Events:
 At the current rate of requests per second the deployment will never get to the max value of 10 pods. 
 Three replicas are enough to keep the RPS under 10 per each pod.
 
-After the load tests finishes the PHA will down scale the deployment to it's initial replicas:
+After the load tests finishes the HPA will down scale the deployment to it's initial replicas:
 
 ```
 Events:
