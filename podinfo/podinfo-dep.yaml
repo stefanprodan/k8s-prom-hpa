@@ -1,0 +1,61 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: podinfo
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: podinfo
+      annotations:
+        prometheus.io/scrape: 'true'
+    spec:
+      containers:
+      - name: podinfod
+        image: stefanprodan/podinfo:0.0.1
+        imagePullPolicy: Always
+        command:
+          - ./podinfo
+          - -port=9898
+          - -logtostderr=true
+          - -v=2
+        volumeMounts:
+          - name: metadata
+            mountPath: /etc/podinfod/metadata
+            readOnly: true
+        ports:
+        - containerPort: 9898
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 9898
+          initialDelaySeconds: 1
+          periodSeconds: 2
+          failureThreshold: 1
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 9898
+          initialDelaySeconds: 1
+          periodSeconds: 3
+          failureThreshold: 2
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "1m"
+          limits:
+            memory: "256Mi"
+            cpu: "100m"
+      volumes:
+        - name: metadata
+          downwardAPI:
+            items:
+              - path: "labels"
+                fieldRef:
+                  fieldPath: metadata.labels
+              - path: "annotations"
+                fieldRef:
+                  fieldPath: metadata.annotations
