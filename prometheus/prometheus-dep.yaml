@@ -1,0 +1,42 @@
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      serviceAccountName: prometheus
+      containers:
+      - name: prometheus
+        image: prom/prometheus:v2.0.0
+        imagePullPolicy: Always
+        command:
+          - prometheus
+          - --config.file=/etc/prometheus/prometheus.yml
+        ports:
+        - containerPort: 9090
+          protocol: TCP
+        resources:
+          limits:
+            memory: 2Gi
+        volumeMounts:
+        - mountPath: /etc/prometheus/prometheus.yml
+          name: prometheus-config
+          subPath: prometheus.yml
+      volumes:
+        - name: prometheus-config
+          configMap:
+            name: prometheus-config
+            items:
+              - key: prometheus.yml
+                path: prometheus.yml
+                mode: 0644
