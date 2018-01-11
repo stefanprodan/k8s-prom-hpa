@@ -6,11 +6,19 @@ Kubernetes Horizontal Pod Autoscaler with Prometheus custom metrics
 
 ### Metrics Server
 
+The Kubernetes [Metrics Server](https://github.com/kubernetes-incubator/metrics-server) 
+is a cluster-wide aggregator of resource usage data and it's the successor of Hipster. 
+The metrics server collects CPU and memory usage for nodes and pods by pooling data from the `kubernetes.summary_api`. 
+The summary API is a memory-efficient API for passing data from Kubelet/cAdvisor to the metrics server.
+
+If in the first version of HPA you would need Heapster to provide CPU and memory metrics, in 
+HPA v2 and Kubernetes 1.8 all you need is the metrics server and the 
+`horizontal-pod-autoscaler-use-rest-clients` turned on. The HPA rest client is enabled by default in Kubernetes 1.9.
+
 Deploy `metrics-server` in the `kube-system` namespace:
 
 ```bash
-kubectl create \
-    -f ./metrics-server
+kubectl create -f ./metrics-server
 ```
 
 After one minute the `metric-server` will start reporting CPU and memory metrics for nodes and pods.
@@ -18,15 +26,13 @@ After one minute the `metric-server` will start reporting CPU and memory metrics
 View nodes metrics:
 
 ```bash
-kubectl get \
-    --raw "/apis/metrics.k8s.io/v1beta1/nodes" | jq
+kubectl get --raw "/apis/metrics.k8s.io/v1beta1/nodes" | jq
 ```
 
 View pods metrics:
 
 ```bash
-kubectl get \
-    --raw "/apis/metrics.k8s.io/v1beta1/pods" | jq
+kubectl get --raw "/apis/metrics.k8s.io/v1beta1/pods" | jq
 ```
 
 ### Auto Scaling based on CPU and memory usage
@@ -71,8 +77,7 @@ spec:
 Create the HPA:
 
 ```bash
-kubectl create \
-    -f ./podinfo/podinfo-hpa.yaml
+kubectl create -f ./podinfo/podinfo-hpa.yaml
 ```
 
 After a couple of seconds the HPA controller will contact the metrics server and will fetch the CPU 
@@ -109,18 +114,23 @@ Events:
 
 ### Prometheus
 
+In order to scale based on custom metrics you need to have two components. 
+One component to collect metrics from your applications and store them in a time series database, 
+that's [Prometheus](https://prometheus.io).
+And a second component that extends the Kubernetes custom metrics API with the metrics supplied by the collector, 
+that's [k8s-prometheus-adapter](https://github.com/DirectXMan12/k8s-prometheus-adapter).
+
+
 Create the `monitoring` namespace:
 
 ```bash
-kubectl create \
-    -f ./namespaces.yaml
+kubectl create -f ./namespaces.yaml
 ```
 
 Deploy Prometheus v2 in the `monitoring` namespace:
 
 ```bash
-kubectl create \
-    -f ./prometheus
+kubectl create -f ./prometheus
 ```
 
 Generate the TLS certificates needed by the Prometheus adapter:
@@ -132,22 +142,19 @@ make certs
 Deploy the Prometheus custom metrics API adapter:
 
 ```bash
-kubectl create \
-    -f ./custom-metrics-api
+kubectl create -f ./custom-metrics-api
 ```
 
 List the custom metrics provided by Prometheus:
 
 ```bash
-kubectl get \
-    --raw "/apis/custom.metrics.k8s.io/v1beta1" | jq
+kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1" | jq
 ```
 
 Get the FS usage for all the pods in the `monitoring` namespace:
 
 ```bash
-kubectl get \
-    --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/monitoring/pods/*/fs_usage_bytes" | jq
+kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/monitoring/pods/*/fs_usage_bytes" | jq
 ```
 
 ### Auto Scaling based on custom metrics
@@ -155,8 +162,7 @@ kubectl get \
 Create `podinfo` NodePort service and deployment in the `default` namespace:
 
 ```bash
-kubectl create \
-    -f ./podinfo/podinfo-svc.yaml,podinfo-dep.yaml
+kubectl create -f ./podinfo/podinfo-svc.yaml,podinfo-dep.yaml
 ```
 
 The `podinfo` app exposes a custom metric named `http_requests_total`. 
@@ -165,8 +171,7 @@ The Prometheus adapter removes the `_total` suffix and marks the metric as a cou
 Get the total requests per second from the custom metrics API:
 
 ```bash
-kubectl get \
-    --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/default/pods/*/http_requests" | jq
+kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/default/pods/*/http_requests" | jq
 ```
 ```json
 {
@@ -228,8 +233,7 @@ spec:
 Create the hpa for the `podinfo` deployment in the `default` namespace:
 
 ```bash
-kubectl create \
-    -f ./podinfo/podinfo-hpa-custom.yaml
+kubectl create -f ./podinfo/podinfo-hpa-custom.yaml
 ```
 
 After a couple of seconds the HPA will fetch the `http_requests` value from the metrics API:
