@@ -4,7 +4,7 @@ Kubernetes Horizontal Pod Autoscaler with Prometheus custom metrics
 
 ![Overview](https://github.com/stefanprodan/k8s-prom-hpa/blob/master/diagrams/k8s-hpa.png)
 
-### Metrics Server
+### Metrics Server Setup
 
 The Kubernetes [Metrics Server](https://github.com/kubernetes-incubator/metrics-server) 
 is a cluster-wide aggregator of resource usage data and it's the successor of Hipster. 
@@ -15,13 +15,13 @@ If in the first version of HPA you would need Heapster to provide CPU and memory
 HPA v2 and Kubernetes 1.8 all you need is the metrics server and the 
 `horizontal-pod-autoscaler-use-rest-clients` turned on. The HPA rest client is enabled by default in Kubernetes 1.9.
 
-Deploy `metrics-server` in the `kube-system` namespace:
+Deploy the Metrics Server in the `kube-system` namespace:
 
 ```bash
 kubectl create -f ./metrics-server
 ```
 
-After one minute the `metric-server` will start reporting CPU and memory metrics for nodes and pods.
+After one minute the `metric-server` will start reporting CPU and memory usage for nodes and pods.
 
 View nodes metrics:
 
@@ -37,16 +37,17 @@ kubectl get --raw "/apis/metrics.k8s.io/v1beta1/pods" | jq
 
 ### Auto Scaling based on CPU and memory usage
 
-We will be using a small golang web app to test the HPA.
+![Metrics-Server](https://github.com/stefanprodan/k8s-prom-hpa/blob/master/diagrams/k8s-hpa-ms.png)
+
+We will be using a small golang web app to test the horizontal pod autoscaler.
 
 Deploy [podinfo](https://github.com/stefanprodan/k8s-podinfo) in the `default` namespace:
 
 ```bash
-kubectl create \
-    -f ./podinfo/podinfo-svc.yaml,podinfo-dep.yaml
+kubectl create -f ./podinfo/podinfo-svc.yaml,./podinfo/podinfo-dep.yaml
 ```
 
-You can access podinfo using the NodePort service at `http://<K8S_PUBLIC_IP>:31198`.
+You can access `podinfo` using the NodePort service at `http://<K8S_PUBLIC_IP>:31198`.
 
 Let's define a HPA that will maintain a minimum of two replicas and will scale up to ten 
 if the CPU average is over 80% or if the memory goes over 200Mi:
@@ -90,7 +91,7 @@ NAME      REFERENCE            TARGETS                      MINPODS   MAXPODS   
 podinfo   Deployment/podinfo   2826240 / 200Mi, 15% / 80%   2         10        2          5m
 ```
 
-In order to increase the CPU usage we could run a load test with hey:
+In order to increase the CPU usage we can run a load test with `rakyll/hey`:
 
 ```bash
 #install hey
@@ -112,7 +113,13 @@ Events:
   Normal  SuccessfulRescale  3m    horizontal-pod-autoscaler  New size: 8; reason: cpu resource utilization (percentage of request) above target
 ```
 
-### Prometheus
+Remove podinfo for now as we will deploy it again later:
+
+```bash
+kubectl delete -f ./podinfo/podinfo-hpa.yaml,./podinfo/podinfo-dep.yaml,./podinfo/podinfo-svc.yaml
+```
+
+### Custom Metrics Server Setup
 
 In order to scale based on custom metrics you need to have two components. 
 One component to collect metrics from your applications and store them in a time series database, 
@@ -120,6 +127,7 @@ that's [Prometheus](https://prometheus.io).
 And a second component that extends the Kubernetes custom metrics API with the metrics supplied by the collector, 
 that's [k8s-prometheus-adapter](https://github.com/DirectXMan12/k8s-prometheus-adapter).
 
+We will be deploying Prometheus and the adapter in a dedicated namespace. 
 
 Create the `monitoring` namespace:
 
@@ -159,10 +167,12 @@ kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/monitoring/pod
 
 ### Auto Scaling based on custom metrics
 
+![Custom-Metrics-Server](https://github.com/stefanprodan/k8s-prom-hpa/blob/master/diagrams/k8s-hpa-prom.png)
+
 Create `podinfo` NodePort service and deployment in the `default` namespace:
 
 ```bash
-kubectl create -f ./podinfo/podinfo-svc.yaml,podinfo-dep.yaml
+kubectl create -f ./podinfo/podinfo-svc.yaml,./podinfo/podinfo-dep.yaml
 ```
 
 The `podinfo` app exposes a custom metric named `http_requests_total`. 
