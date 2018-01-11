@@ -2,6 +2,8 @@
 
 Kubernetes Horizontal Pod Autoscaler with Prometheus custom metrics
 
+![Overview](https://github.com/stefanprodan/k8s-prom-hpa/blob/master/diagrams/k8s-hpa.png)
+
 ### Metrics Server
 
 Deploy `metrics-server` in the `kube-system` namespace:
