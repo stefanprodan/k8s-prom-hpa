@@ -124,7 +124,7 @@ kubectl create \
 Generate the TLS certificates needed by the Prometheus adapter:
 
 ```bash
-bash -c "cd custom-metrics-api && ./gencerts.sh"
+make certs
 ```
 
 Deploy the Prometheus custom metrics API adapter:
