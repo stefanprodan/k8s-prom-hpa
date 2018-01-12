@@ -11,6 +11,8 @@ is a cluster-wide aggregator of resource usage data and it's the successor of Hi
 The metrics server collects CPU and memory usage for nodes and pods by pooling data from the `kubernetes.summary_api`. 
 The summary API is a memory-efficient API for passing data from Kubelet/cAdvisor to the metrics server.
 
+![Metrics-Server](https://github.com/stefanprodan/k8s-prom-hpa/blob/master/diagrams/k8s-hpa-ms.png)
+
 If in the first version of HPA you would need Heapster to provide CPU and memory metrics, in 
 HPA v2 and Kubernetes 1.8 all you need is the metrics server and the 
 `horizontal-pod-autoscaler-use-rest-clients` turned on. The HPA rest client is enabled by default in Kubernetes 1.9.
@@ -36,8 +38,6 @@ kubectl get --raw "/apis/metrics.k8s.io/v1beta1/pods" | jq
 ```
 
 ### Auto Scaling based on CPU and memory usage
-
-![Metrics-Server](https://github.com/stefanprodan/k8s-prom-hpa/blob/master/diagrams/k8s-hpa-ms.png)
 
 We will be using a small golang web app to test the horizontal pod autoscaler.
 
@@ -127,6 +127,8 @@ that's [Prometheus](https://prometheus.io).
 And a second component that extends the Kubernetes custom metrics API with the metrics supplied by the collector, 
 that's [k8s-prometheus-adapter](https://github.com/DirectXMan12/k8s-prometheus-adapter).
 
+![Custom-Metrics-Server](https://github.com/stefanprodan/k8s-prom-hpa/blob/master/diagrams/k8s-hpa-prom.png)
+
 We will be deploying Prometheus and the adapter in a dedicated namespace. 
 
 Create the `monitoring` namespace:
@@ -166,8 +168,6 @@ kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/monitoring/pod
 ```
 
 ### Auto Scaling based on custom metrics
-
-![Custom-Metrics-Server](https://github.com/stefanprodan/k8s-prom-hpa/blob/master/diagrams/k8s-hpa-prom.png)
 
 Create `podinfo` NodePort service and deployment in the `default` namespace:
 
