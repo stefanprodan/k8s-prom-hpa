@@ -2,6 +2,26 @@
 
 Kubernetes Horizontal Pod Autoscaler with Prometheus custom metrics
 
+Autoscaling is an approach to automatically scale up or down workloads based on the resource usage. 
+Autoscaling in Kubernetes has two dimensions: the Cluster Autoscaler that deals with node scaling 
+operations and the Horizontal Pod Autoscaler that automatically scales the number of pods in a 
+deployment or replica set. The Cluster Autoscaling together with Horizontal Pod Autoscaler can be used 
+to dynamically adjust the computing power and parallelism level that your system needs to meet SLAs.
+While the Cluster Autoscaler is highly depended on the underling capabilities of the cloud provider 
+that's hosting your cluster, the HPA can operate independently of your IaaS/PaaS provider. 
+
+The Horizontal Pod Autoscaler feature was first introduced in Kubernetes v1.1 and 
+has evolved a lot since then. At first HPA v1 was able to scale pods based on 
+observed CPU utilisation and later on based on memory usage. 
+In Kubernetes 1.6 a new API emerged called Custom Metrics API that enables HPA access to arbitrary metrics. 
+Later on, Kubernetes 1.7 introduced the aggregation layer allowing 3rd party applications to extend the 
+Kubernetes API by registering themselves as API add-ons. 
+The Custom Metrics API along with the aggregation layer made possible for monitoring systems 
+like Prometheus to expose application specific metrics to the HPA controller.
+
+The Horizontal Pod Autoscaler is implemented as a control loop that periodically queries 
+the Resource Metrics API for core metrics like CPU/memory and the Custom Metrics API for application-specific metrics.  
+
 ![Overview](https://github.com/stefanprodan/k8s-prom-hpa/blob/master/diagrams/k8s-hpa.png)
 
 ### Metrics Server Setup
