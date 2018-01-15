@@ -137,7 +137,7 @@ Events:
   Normal  SuccessfulRescale  3m    horizontal-pod-autoscaler  New size: 8; reason: cpu resource utilization (percentage of request) above target
 ```
 
-Remove podinfo for now as we will deploy it again later:
+Remove `podinfo` for now as we will deploy it again later:
 
 ```bash
 kubectl delete -f ./podinfo/podinfo-hpa.yaml,./podinfo/podinfo-dep.yaml,./podinfo/podinfo-svc.yaml
@@ -264,7 +264,7 @@ spec:
       targetAverageValue: 10
 ```
 
-Create the hpa for the `podinfo` deployment in the `default` namespace:
+Deploy the `podinfo` HPA in the `default` namespace:
 
 ```bash
 kubectl create -f ./podinfo/podinfo-hpa-custom.yaml
@@ -320,3 +320,9 @@ Events:
   Normal  SuccessfulRescale  5m    horizontal-pod-autoscaler  New size: 3; reason: pods metric http_requests above target
   Normal  SuccessfulRescale  21s   horizontal-pod-autoscaler  New size: 2; reason: All metrics below target
 ```
+
+You may noticed that the autoscaler doesn't react immediately to usage spikes. 
+By default the metrics sync happens once every 30 seconds and scale up/down can 
+only happen if there was no rescaling within the last 3-5 minutes. 
+This way the HPA prevents rapid execution of conflicting decisions and gives time for the 
+Cluster Autoscaler to kick in.
