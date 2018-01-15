@@ -326,3 +326,11 @@ By default the metrics sync happens once every 30 seconds and scale up/down can
 only happen if there was no rescaling within the last 3-5 minutes. 
 This way the HPA prevents rapid execution of conflicting decisions and gives time for the 
 Cluster Autoscaler to kick in.
+
+### Conclusions
+
+Not all systems can meet their SLAs by only relying on CPU/memory usage metrics, most web and mobile 
+backends will require autoscaling based on requests per second to handle traffic bursts. 
+For ETL apps auto scaling could be triggered by the job queue length exceeding some threshold and so on. 
+By instrumenting your applications with Prometheus and exposing the right metrics for autoscaling you can 
+fine tune your apps to better handle bursts and ensure high availability.
