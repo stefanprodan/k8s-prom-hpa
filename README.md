@@ -1,45 +1,45 @@
-# k8s-prom-hpa
+# What is the Prometheus Horizontal Pod Autoscaler (HPA)?
 
 Autoscaling is an approach to automatically scale up or down workloads based on the resource usage. 
 Autoscaling in Kubernetes has two dimensions: the Cluster Autoscaler that deals with node scaling 
 operations and the Horizontal Pod Autoscaler that automatically scales the number of pods in a 
 deployment or replica set. The Cluster Autoscaling together with Horizontal Pod Autoscaler can be used 
-to dynamically adjust the computing power and parallelism level that your system needs to meet SLAs.
-While the Cluster Autoscaler is highly depended on the underling capabilities of the cloud provider 
+to dynamically adjust the computing power as well as the level of parallelism that your system needs to meet SLAs.
+While the Cluster Autoscaler is highly dependent on the underling capabilities of the cloud provider 
 that's hosting your cluster, the HPA can operate independently of your IaaS/PaaS provider. 
 
 The Horizontal Pod Autoscaler feature was first introduced in Kubernetes v1.1 and 
-has evolved a lot since then. At first HPA v1 was able to scale pods based on 
-observed CPU utilisation and later on based on memory usage. 
-In Kubernetes 1.6 a new API emerged called Custom Metrics API that enables HPA access to arbitrary metrics. 
-Later on, Kubernetes 1.7 introduced the aggregation layer allowing 3rd party applications to extend the 
+has evolved a lot since then. Version 1 of the HPA scaled pods based on 
+observed CPU utilization and later on based on memory usage. 
+In Kubernetes 1.6 a new API Custom Metrics API was introduced that enables HPA access to arbitrary metrics. 
+And Kubernetes 1.7 introduced the aggregation layer that allows 3rd party applications to extend the 
 Kubernetes API by registering themselves as API add-ons. 
-The Custom Metrics API along with the aggregation layer made possible for monitoring systems 
-like Prometheus to expose application specific metrics to the HPA controller.
+The Custom Metrics API along with the aggregation layer made it possible for monitoring systems 
+like Prometheus to expose application-specific metrics to the HPA controller.
 
 The Horizontal Pod Autoscaler is implemented as a control loop that periodically queries 
 the Resource Metrics API for core metrics like CPU/memory and the Custom Metrics API for application-specific metrics.  
 
 ![Overview](https://github.com/stefanprodan/k8s-prom-hpa/blob/master/diagrams/k8s-hpa.png)
 
-What follows is a step by step guide on configuring HPA v2 for Kubernetes 1.9 or later. 
-We will be installing the Metrics Server add-on that will supply the core metrics and we'll use a demo 
-app to showcase pod autoscaling based on CPU and memory usage. In the second part of the guide we will 
-deploy Prometheus and a custom API server. We will register the custom API server with the 
-aggregator layer and we'll configure HPA with custom metrics supplied by the demo application.
+What follows is a step-by-step guide on configuring HPA v2 for Kubernetes 1.9 or later. 
+You will install the Metrics Server add-on that supplies the core metrics and then you'll use a demo 
+app to showcase pod autoscaling based on CPU and memory usage. In the second part of the guide you will 
+deploy Prometheus and a custom API server. You will register the custom API server with the 
+aggregator layer and then configure HPA with custom metrics supplied by the demo application.
 
-### Metrics Server Setup
+### Setting up the Metrics Server
 
 The Kubernetes [Metrics Server](https://github.com/kubernetes-incubator/metrics-server) 
-is a cluster-wide aggregator of resource usage data and it's the successor of Hipster. 
+is a cluster-wide aggregator of resource usage data and is the successor of [Heapster](https://github.com/kubernetes/heapster). 
 The metrics server collects CPU and memory usage for nodes and pods by pooling data from the `kubernetes.summary_api`. 
 The summary API is a memory-efficient API for passing data from Kubelet/cAdvisor to the metrics server.
 
 ![Metrics-Server](https://github.com/stefanprodan/k8s-prom-hpa/blob/master/diagrams/k8s-hpa-ms.png)
 
 If in the first version of HPA you would need Heapster to provide CPU and memory metrics, in 
-HPA v2 and Kubernetes 1.8 all you need is the metrics server and the 
-`horizontal-pod-autoscaler-use-rest-clients` turned on. The HPA rest client is enabled by default in Kubernetes 1.9.
+HPA v2 and Kubernetes 1.8 only metrics server is required with the 
+`horizontal-pod-autoscaler-use-rest-clients` switched on. The HPA rest client is enabled by default in Kubernetes 1.9.
 
 Deploy the Metrics Server in the `kube-system` namespace:
 
@@ -47,7 +47,7 @@ Deploy the Metrics Server in the `kube-system` namespace:
 kubectl create -f ./metrics-server
 ```
 
-After one minute the `metric-server` will start reporting CPU and memory usage for nodes and pods.
+After one minute the `metric-server` starts reporting CPU and memory usage for nodes and pods.
 
 View nodes metrics:
 
@@ -63,17 +63,17 @@ kubectl get --raw "/apis/metrics.k8s.io/v1beta1/pods" | jq
 
 ### Auto Scaling based on CPU and memory usage
 
-We will be using a small golang web app to test the horizontal pod autoscaler.
+You will use a small Golang-based web app to test the Horizontal Pod Autoscaler (HPA).
 
-Deploy [podinfo](https://github.com/stefanprodan/k8s-podinfo) in the `default` namespace:
+Deploy [podinfo](https://github.com/stefanprodan/k8s-podinfo) to the `default` namespace:
 
 ```bash
 kubectl create -f ./podinfo/podinfo-svc.yaml,./podinfo/podinfo-dep.yaml
 ```
 
-You can access `podinfo` using the NodePort service at `http://<K8S_PUBLIC_IP>:31198`.
+Access `podinfo` with the NodePort service at `http://<K8S_PUBLIC_IP>:31198`.
 
-Let's define a HPA that will maintain a minimum of two replicas and will scale up to ten 
+Next define a HPA that maintains a minimum of two replicas and scales up to ten 
 if the CPU average is over 80% or if the memory goes over 200Mi:
 
 ```yaml
@@ -105,7 +105,7 @@ Create the HPA:
 kubectl create -f ./podinfo/podinfo-hpa.yaml
 ```
 
-After a couple of seconds the HPA controller will contact the metrics server and will fetch the CPU 
+After a couple of seconds the HPA controller contacts the metrics server and then fetches the CPU 
 and memory usage:
 
 ```bash
@@ -115,7 +115,7 @@ NAME      REFERENCE            TARGETS                      MINPODS   MAXPODS   
 podinfo   Deployment/podinfo   2826240 / 200Mi, 15% / 80%   2         10        2          5m
 ```
 
-In order to increase the CPU usage we can run a load test with `rakyll/hey`:
+In order to increase the CPU usage, run a load test with `rakyll/hey`:
 
 ```bash
 #install hey
@@ -137,23 +137,21 @@ Events:
   Normal  SuccessfulRescale  3m    horizontal-pod-autoscaler  New size: 8; reason: cpu resource utilization (percentage of request) above target
 ```
 
-Remove `podinfo` for now as we will deploy it again later:
+Remove `podinfo` for the moment. You will deploy it again later on in this tutorial:
 
 ```bash
 kubectl delete -f ./podinfo/podinfo-hpa.yaml,./podinfo/podinfo-dep.yaml,./podinfo/podinfo-svc.yaml
 ```
 
-### Custom Metrics Server Setup
+### Setting up a Custom Metrics Server 
 
 In order to scale based on custom metrics you need to have two components. 
-One component to collect metrics from your applications and store them in a time series database, 
-that's [Prometheus](https://prometheus.io).
-And a second component that extends the Kubernetes custom metrics API with the metrics supplied by the collector, 
-that's [k8s-prometheus-adapter](https://github.com/DirectXMan12/k8s-prometheus-adapter).
+One component that collects metrics from your applications and stores them the [Prometheus](https://prometheus.io) time series database.
+And a second component that extends the Kubernetes custom metrics API with the metrics supplied by the [k8s-prometheus-adapter](https://github.com/DirectXMan12/k8s-prometheus-adapter) or collector.
 
 ![Custom-Metrics-Server](https://github.com/stefanprodan/k8s-prom-hpa/blob/master/diagrams/k8s-hpa-prom.png)
 
-We will be deploying Prometheus and the adapter in a dedicated namespace. 
+You will deploy Prometheus and the adapter in a dedicated namespace. 
 
 Create the `monitoring` namespace:
 
@@ -241,9 +239,9 @@ kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/default/pods/*
 }
 ```
 
-If you're wandering what `m` represents it's `milli-units`, so the `901m` means 901 milli-requests.
+The `m` represents `milli-units`, so for example, `901m` means 901 milli-requests.
 
-Let's create a HPA that will scale up the `podinfo` deployment if the number of requests goes over 10 per second:
+Create a HPA that will scale up the `podinfo` deployment if the number of requests goes over 10 per second:
 
 ```yaml
 apiVersion: autoscaling/v2beta1
@@ -270,7 +268,7 @@ Deploy the `podinfo` HPA in the `default` namespace:
 kubectl create -f ./podinfo/podinfo-hpa-custom.yaml
 ```
 
-After a couple of seconds the HPA will fetch the `http_requests` value from the metrics API:
+After a couple of seconds the HPA fetches the `http_requests` value from the metrics API:
 
 ```bash
 kubectl get hpa
@@ -279,7 +277,7 @@ NAME      REFERENCE            TARGETS     MINPODS   MAXPODS   REPLICAS   AGE
 podinfo   Deployment/podinfo   899m / 10   2         10        2          1m
 ```
 
-Let's hit the `podinfo` service with 25 requests per second:
+Apply some load on the `podinfo` service with 25 requests per second:
 
 ```bash
 #install hey
@@ -289,7 +287,7 @@ go get -u github.com/rakyll/hey
 hey -n 10000 -q 5 -c 5 http://<K8S-IP>:31198/healthz
 ```
 
-After a couple of minutes the HPA will start to scale up the deployment:
+After a few minutes the HPA begins to scale up the deployment:
 
 ```
 kubectl describe hpa
@@ -311,7 +309,7 @@ Events:
 At the current rate of requests per second the deployment will never get to the max value of 10 pods. 
 Three replicas are enough to keep the RPS under 10 per each pod.
 
-After the load tests finishes the HPA will down scale the deployment to it's initial replicas:
+After the load tests finishes, the HPA down scales the deployment to it's initial replicas:
 
 ```
 Events:
@@ -321,16 +319,16 @@ Events:
   Normal  SuccessfulRescale  21s   horizontal-pod-autoscaler  New size: 2; reason: All metrics below target
 ```
 
-You may noticed that the autoscaler doesn't react immediately to usage spikes. 
-By default the metrics sync happens once every 30 seconds and scale up/down can 
+You may have noticed that the autoscaler doesn't react immediately to usage spikes. 
+By default the metrics sync happens once every 30 seconds and scaling up/down can 
 only happen if there was no rescaling within the last 3-5 minutes. 
-This way the HPA prevents rapid execution of conflicting decisions and gives time for the 
+In this way, the HPA prevents rapid execution of conflicting decisions and gives time for the 
 Cluster Autoscaler to kick in.
 
 ### Conclusions
 
-Not all systems can meet their SLAs by only relying on CPU/memory usage metrics, most web and mobile 
-backends will require autoscaling based on requests per second to handle traffic bursts. 
-For ETL apps auto scaling could be triggered by the job queue length exceeding some threshold and so on. 
+Not all systems can meet their SLAs by relying on CPU/memory usage metrics alone, most web and mobile 
+backends require autoscaling based on requests per second to handle any traffic bursts. 
+For ETL apps, auto scaling could be triggered by the job queue length exceeding some threshold and so on. 
 By instrumenting your applications with Prometheus and exposing the right metrics for autoscaling you can 
 fine tune your apps to better handle bursts and ensure high availability.
