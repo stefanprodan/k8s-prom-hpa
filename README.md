@@ -52,13 +52,13 @@ After one minute the `metric-server` starts reporting CPU and memory usage for n
 View nodes metrics:
 
 ```bash
-kubectl get --raw "/apis/metrics.k8s.io/v1beta1/nodes" | jq
+kubectl get --raw "/apis/metrics.k8s.io/v1beta1/nodes" | jq .
 ```
 
 View pods metrics:
 
 ```bash
-kubectl get --raw "/apis/metrics.k8s.io/v1beta1/pods" | jq
+kubectl get --raw "/apis/metrics.k8s.io/v1beta1/pods" | jq .
 ```
 
 ### Auto Scaling based on CPU and memory usage
@@ -180,13 +180,13 @@ kubectl create -f ./custom-metrics-api
 List the custom metrics provided by Prometheus:
 
 ```bash
-kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1" | jq
+kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1" | jq .
 ```
 
 Get the FS usage for all the pods in the `monitoring` namespace:
 
 ```bash
-kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/monitoring/pods/*/fs_usage_bytes" | jq
+kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/monitoring/pods/*/fs_usage_bytes" | jq .
 ```
 
 ### Auto Scaling based on custom metrics
@@ -203,7 +203,7 @@ The Prometheus adapter removes the `_total` suffix and marks the metric as a cou
 Get the total requests per second from the custom metrics API:
 
 ```bash
-kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/default/pods/*/http_requests" | jq
+kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/default/pods/*/http_requests" | jq .
 ```
 ```json
 {
