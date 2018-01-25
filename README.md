@@ -1,4 +1,4 @@
-# What is the Prometheus Horizontal Pod Autoscaler (HPA)?
+# k8s-prom-hpa
 
 Autoscaling is an approach to automatically scale up or down workloads based on the resource usage. 
 Autoscaling in Kubernetes has two dimensions: the Cluster Autoscaler that deals with node scaling 
@@ -147,7 +147,7 @@ kubectl delete -f ./podinfo/podinfo-hpa.yaml,./podinfo/podinfo-dep.yaml,./podinf
 
 In order to scale based on custom metrics you need to have two components. 
 One component that collects metrics from your applications and stores them the [Prometheus](https://prometheus.io) time series database.
-And a second component that extends the Kubernetes custom metrics API with the metrics supplied by the [k8s-prometheus-adapter](https://github.com/DirectXMan12/k8s-prometheus-adapter) or collector.
+And a second component that extends the Kubernetes custom metrics API with the metrics supplied by the collect, the [k8s-prometheus-adapter](https://github.com/DirectXMan12/k8s-prometheus-adapter).
 
 ![Custom-Metrics-Server](https://github.com/stefanprodan/k8s-prom-hpa/blob/master/diagrams/k8s-hpa-prom.png)
 
