@@ -40,8 +40,8 @@ The summary API is a memory-efficient API for passing data from Kubelet/cAdvisor
 If in the first version of HPA you would need Heapster to provide CPU and memory metrics, in 
 HPA v2 and Kubernetes 1.8 only the metrics server is required with the 
 `horizontal-pod-autoscaler-use-rest-clients` switched on.
-The HPA rest client is enabled by default in Kubernetes 1.9, 
-GKE users will have to wait for 1.9 to be released on Google Cloud.
+The HPA rest client is enabled by default in Kubernetes 1.9.
+GKE 1.9 comes with the Metrics Server pre-installed.
 
 Deploy the Metrics Server in the `kube-system` namespace:
 
