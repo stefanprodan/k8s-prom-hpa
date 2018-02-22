@@ -28,7 +28,7 @@ app to showcase pod autoscaling based on CPU and memory usage. In the second par
 deploy Prometheus and a custom API server. You will register the custom API server with the 
 aggregator layer and then configure HPA with custom metrics supplied by the demo application.
 
-Before you begin you need to clone the [k8s-prom-hap](https://github.com/stefanprodan/k8s-prom-hpa) repo in your `GOPATH`:
+Before you begin you need to install Go 1.8 or later and clone the [k8s-prom-hpa](https://github.com/stefanprodan/k8s-prom-hpa) repo in your `GOPATH`:
 
 ```bash
 cd $GOPATH
