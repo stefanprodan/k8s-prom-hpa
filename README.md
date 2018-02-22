@@ -28,6 +28,13 @@ app to showcase pod autoscaling based on CPU and memory usage. In the second par
 deploy Prometheus and a custom API server. You will register the custom API server with the 
 aggregator layer and then configure HPA with custom metrics supplied by the demo application.
 
+Before you begin you need to clone the [k8s-prom-hap](https://github.com/stefanprodan/k8s-prom-hpa) repo in your `GOPATH`:
+
+```bash
+cd $GOPATH
+git clone https://github.com/stefanprodan/k8s-prom-hpa
+```
+
 ### Setting up the Metrics Server
 
 The Kubernetes [Metrics Server](https://github.com/kubernetes-incubator/metrics-server) 
