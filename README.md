@@ -170,6 +170,9 @@ kubectl create -f ./namespaces.yaml
 
 Deploy Prometheus v2 in the `monitoring` namespace:
 
+*If you are deploying to GKE you might get an error saying: `Error from server (Forbidden): error when creating`
+This will help you resolve that issue:* [RBAC on GKE](https://github.com/coreos/prometheus-operator/blob/master/Documentation/troubleshooting.md)
+
 ```bash
 kubectl create -f ./prometheus
 ```
