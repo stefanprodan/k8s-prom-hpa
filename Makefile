@@ -1,6 +1,7 @@
 # Makefile for generating TLS certs for the Prometheus custom metrics API adapter
 
 SHELL=bash
+UNAME := $(shell uname)
 PURPOSE:=metrics
 SERVICE_NAME:=custom-metrics-apiserver
 ALT_NAMES:="custom-metrics-apiserver.monitoring","custom-metrics-apiserver.monitoring.svc"
@@ -25,8 +26,14 @@ gensecret: gencerts
 	@echo " name: cm-adapter-serving-certs" >> $(SECRET_FILE)
 	@echo " namespace: monitoring" >> $(SECRET_FILE)
 	@echo "data:" >> $(SECRET_FILE)
+ifeq ($(UNAME), Darwin)
 	@echo " serving.crt: $$(cat apiserver.pem | base64)" >> $(SECRET_FILE)
 	@echo " serving.key: $$(cat apiserver-key.pem | base64)" >> $(SECRET_FILE)
+endif
+ifeq ($(UNAME), Linux)
+	@echo " serving.crt: $$(cat apiserver.pem | base64 -w 0)" >> $(SECRET_FILE)
+	@echo " serving.key: $$(cat apiserver-key.pem | base64 -w 0)" >> $(SECRET_FILE)
+endif
 
 .PHONY: rmcerts
 rmcerts:
