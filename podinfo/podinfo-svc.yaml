@@ -6,6 +6,8 @@ metadata:
   labels:
     app: podinfo
 spec:
+# To get this running in GKE you have to set type to LoadBalancer
+# and remove protocol and nodePort properties
   type: NodePort
   ports:
     - port: 9898
