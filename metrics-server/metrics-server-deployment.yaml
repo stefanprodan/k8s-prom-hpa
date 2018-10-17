@@ -28,13 +28,14 @@ spec:
       - name: tmp-dir
         emptyDir: {}
       containers:
-      - name: metrics-server
-        image: gcr.io/google_containers/metrics-server-amd64:v0.2.1
+      - command:
+        - /metrics-server
+        - --kubelet-insecure-tls
+        - --kubelet-preferred-address-types=InternalIP
+        name: metrics-server
+        image: k8s.gcr.io/metrics-server-amd64:v0.3.1
         imagePullPolicy: Always
         volumeMounts:
         - name: tmp-dir
           mountPath: /tmp
-        command:
-        - /metrics-server
-        - --kubelet-insecure-tls
-        - --kubelet-preferred-address-types=InternalIP
+
