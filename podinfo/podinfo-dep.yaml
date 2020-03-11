@@ -4,6 +4,9 @@ kind: Deployment
 metadata:
   name: podinfo
 spec:
+  selector:
+    matchLabels:
+      app: podinfo
   replicas: 2
   template:
     metadata:

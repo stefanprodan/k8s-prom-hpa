@@ -92,7 +92,7 @@ metadata:
   name: podinfo
 spec:
   scaleTargetRef:
-    apiVersion: extensions/v1beta1
+    apiVersion: apps/v1
     kind: Deployment
     name: podinfo
   minReplicas: 2
@@ -262,7 +262,7 @@ metadata:
   name: podinfo
 spec:
   scaleTargetRef:
-    apiVersion: extensions/v1beta1
+    apiVersion: app1/v1
     kind: Deployment
     name: podinfo
   minReplicas: 2
