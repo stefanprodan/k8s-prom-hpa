@@ -203,7 +203,7 @@ kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1" | jq .
 Get the FS usage for all the pods in the `monitoring` namespace:
 
 ```bash
-kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/monitoring/pods/*/fs_usage_bytes" | jq .
+kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/monitoring/pods/*/kubelet_container_log_filesystem_used_bytes" | jq .
 ```
 
 ### Auto Scaling based on custom metrics
