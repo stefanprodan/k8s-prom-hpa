@@ -86,13 +86,13 @@ Next define a HPA that maintains a minimum of two replicas and scales up to ten
 if the CPU average is over 80% or if the memory goes over 200Mi:
 
 ```yaml
-apiVersion: autoscaling/v2beta1
+apiVersion: autoscaling/v2beta2
 kind: HorizontalPodAutoscaler
 metadata:
   name: podinfo
 spec:
   scaleTargetRef:
-    apiVersion: extensions/v1beta1
+    apiVersion: apps/v1
     kind: Deployment
     name: podinfo
   minReplicas: 2
@@ -101,11 +101,15 @@ spec:
   - type: Resource
     resource:
       name: cpu
-      targetAverageUtilization: 80
+        target:
+          type: Utilization
+          averageUtilization: 80
   - type: Resource
     resource:
       name: memory
-      targetAverageValue: 200Mi
+        target:
+          type: AverageValue
+          averageValue: 200Mi
 ```
 
 Create the HPA:
@@ -180,6 +184,7 @@ kubectl create -f ./prometheus
 Generate the TLS certificates needed by the Prometheus adapter:
 
 ```bash
+touch metrics-ca.key metrics-ca.crt metrics-ca-config.json
 make certs
 ```
 
@@ -198,7 +203,7 @@ kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1" | jq .
 Get the FS usage for all the pods in the `monitoring` namespace:
 
 ```bash
-kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/monitoring/pods/*/fs_usage_bytes" | jq .
+kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/monitoring/pods/*/kubelet_container_log_filesystem_used_bytes" | jq .
 ```
 
 ### Auto Scaling based on custom metrics
@@ -256,13 +261,13 @@ The `m` represents `milli-units`, so for example, `901m` means 901 milli-request
 Create a HPA that will scale up the `podinfo` deployment if the number of requests goes over 10 per second:
 
 ```yaml
-apiVersion: autoscaling/v2beta1
+apiVersion: autoscaling/v2beta2
 kind: HorizontalPodAutoscaler
 metadata:
   name: podinfo
 spec:
   scaleTargetRef:
-    apiVersion: extensions/v1beta1
+    apiVersion: apps/v1
     kind: Deployment
     name: podinfo
   minReplicas: 2
@@ -270,8 +275,11 @@ spec:
   metrics:
   - type: Pods
     pods:
-      metricName: http_requests
-      targetAverageValue: 10
+        metric:
+          name: http_requests
+        target:
+          type: AverageValue
+          averageValue: 10
 ```
 
 Deploy the `podinfo` HPA in the `default` namespace:
