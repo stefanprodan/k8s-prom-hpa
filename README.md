@@ -86,13 +86,13 @@ Next define a HPA that maintains a minimum of two replicas and scales up to ten
 if the CPU average is over 80% or if the memory goes over 200Mi:
 
 ```yaml
-apiVersion: autoscaling/v2beta1
+apiVersion: autoscaling/v2beta2
 kind: HorizontalPodAutoscaler
 metadata:
   name: podinfo
 spec:
   scaleTargetRef:
-    apiVersion: extensions/v1beta1
+    apiVersion: apps/v1
     kind: Deployment
     name: podinfo
   minReplicas: 2
@@ -101,11 +101,15 @@ spec:
   - type: Resource
     resource:
       name: cpu
-      targetAverageUtilization: 80
+        target:
+          type: Utilization
+          averageUtilization: 80
   - type: Resource
     resource:
       name: memory
-      targetAverageValue: 200Mi
+        target:
+          type: AverageValue
+          averageValue: 200Mi
 ```
 
 Create the HPA:
