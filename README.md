@@ -184,6 +184,7 @@ kubectl create -f ./prometheus
 Generate the TLS certificates needed by the Prometheus adapter:
 
 ```bash
+touch metrics-ca.key metrics-ca.crt metrics-ca-config.json
 make certs
 ```
 
