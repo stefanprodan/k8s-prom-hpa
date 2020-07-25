@@ -5,13 +5,16 @@ metadata:
   name: podinfo
 spec:
   scaleTargetRef:
-    apiVersion: extensions/v1beta1
+    apiVersion: apps/v1
     kind: Deployment
     name: podinfo
   minReplicas: 2
   maxReplicas: 10
   metrics:
-  - type: Pods
-    pods:
-      metricName: http_requests
-      targetAverageValue: 10
+    - type: Pods
+      pods:
+        metric:
+          name: http_requests
+        target:
+          type: AverageValue
+          averageValue: 10

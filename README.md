@@ -261,13 +261,13 @@ The `m` represents `milli-units`, so for example, `901m` means 901 milli-request
 Create a HPA that will scale up the `podinfo` deployment if the number of requests goes over 10 per second:
 
 ```yaml
-apiVersion: autoscaling/v2beta1
+apiVersion: autoscaling/v2beta2
 kind: HorizontalPodAutoscaler
 metadata:
   name: podinfo
 spec:
   scaleTargetRef:
-    apiVersion: extensions/v1beta1
+    apiVersion: apps/v1
     kind: Deployment
     name: podinfo
   minReplicas: 2
@@ -275,8 +275,11 @@ spec:
   metrics:
   - type: Pods
     pods:
-      metricName: http_requests
-      targetAverageValue: 10
+        metric:
+          name: http_requests
+        target:
+          type: AverageValue
+          averageValue: 10
 ```
 
 Deploy the `podinfo` HPA in the `default` namespace:
