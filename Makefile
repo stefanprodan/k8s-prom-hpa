@@ -18,7 +18,7 @@ gencerts:
 	@touch output/apiserver-key.pem
 	@openssl req -x509 -sha256 -new -nodes -days 365 -newkey rsa:2048 -keyout $(PURPOSE)-ca.key -out $(PURPOSE)-ca.crt -subj "/CN=ca"
 	@echo '{"signing":{"default":{"expiry":"43800h","usages":["signing","key encipherment","'$(PURPOSE)'"]}}}' > "$(PURPOSE)-ca-config.json"
-	@echo '{"CN":"'$(SERVICE_NAME)'","hosts":[$(ALT_NAMES)],"key":{"algo":"rsa","size":2048}}' | docker run  -v ${HOME}:${HOME} -v ${PWD}/metrics-ca.key:/go/src/github.com/cloudflare/cfssl/metrics-ca.key -v ${PWD}/metrics-ca.crt:/go/src/github.com/cloudflare/cfssl/metrics-ca.crt -v ${PWD}/metrics-ca-config.json:/go/src/github.com/cloudflare/cfssl/metrics-ca-config.json -i cfssl/cfssl gencert -ca=metrics-ca.crt -ca-key=metrics-ca.key -config=metrics-ca-config.json - | docker run --entrypoint=cfssljson -v ${HOME}:${HOME} -v ${PWD}/output:/go/src/github.com/cloudflare/cfssl/output -i cfssl/cfssl -bare output/apiserver
+	@echo '{"CN":"'$(SERVICE_NAME)'","hosts":[$(ALT_NAMES)],"key":{"algo":"rsa","size":2048}}' | docker run  -v ${HOME}:${HOME} -v ${PWD}/metrics-ca.key:/workdir/metrics-ca.key -v ${PWD}/metrics-ca.crt:/workdir/metrics-ca.crt -v ${PWD}/metrics-ca-config.json:/workdir/metrics-ca-config.json -i cfssl/cfssl gencert -ca=metrics-ca.crt -ca-key=metrics-ca.key -config=metrics-ca-config.json - | docker run --entrypoint=cfssljson -v ${HOME}:${HOME} -v ${PWD}/output:/workdir/output -i cfssl/cfssl -bare output/apiserver
 
 .PHONY: gensecret
 gensecret: gencerts
